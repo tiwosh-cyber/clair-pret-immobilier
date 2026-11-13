@@ -1,0 +1,38 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+service-account*.json
+
+# Claude Code personal files
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+.next/
+coverage/
+.turbo/
+.vercel/
+
+# Supabase local state
+supabase/.temp/
+supabase/.branches/
+
+# Logs and OS files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Uploads used in local tests
+05-STORAGE/uploads/*
+!05-STORAGE/uploads/.gitkeep
+
+# Diffs saved for the security reviewer
+.claude/reviews/*
+!.claude/reviews/.gitkeep
