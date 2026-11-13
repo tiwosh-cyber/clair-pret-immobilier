@@ -20,7 +20,7 @@ Voir `AGENTS.md` (sections « Implementation plan and lot validation » et « Gi
 |---|---|---|---|---|---|---|
 | 01 | Fondations | Vite + React/htm, portage du prototype, CI | — | L'app démarre localement ; scripts et CI vérifiés ; aucun secret versionné | AUCUN BLOQUANT | VALIDÉ |
 | 02 | Simulateur | F-001→F-006 / AC-001→AC-007 / E-002 | 01 | Calculs et validations testés (Vitest), CI verte | AUCUN BLOQUANT | VALIDÉ |
-| 03 | Base et sécurité Supabase locale | T-001 / API-001 / RLS | 01 | pgTAP : RLS, API-001, refus anonyme/Exécutant, auto-rétrogradation, concurrence | — | À FAIRE |
+| 03 | Base et sécurité Supabase locale | T-001 / API-001 / RLS | 01 | pgTAP : RLS, API-001, refus anonyme/Exécutant, auto-rétrogradation, concurrence | AUCUN BLOQUANT | VALIDÉ |
 | 04 | Authentification | F-007→F-009 / AC-008→AC-012 / E-001 | 02 + 03 | Inscription/connexion/déconnexion Supabase réelles, accès fermé après déconnexion | — | À FAIRE |
 | 05 | Gestion des profils | F-010, F-011 / AC-013→AC-016 / E-003 | 04 | Liste et changement de rôle Manager via API-001 ; Exécutant refusé | — | À FAIRE |
 | 06 | Vérifications transversales | E2E, accessibilité, release gate | 05 | Playwright + axe 375/768/1440 px ; aucun constat CRITIQUE/ÉLEVÉE | — | À FAIRE |
@@ -59,6 +59,12 @@ Stratégie de tests : Vitest (calcul, validation), pgTAP sur Supabase local (RLS
 - Tests : `npm run lint` Passed · `npm test` Passed 37/37 · `npm run build` Passed · `npm audit` Passed.
 - Revue sécurité : AUCUN BLOQUANT (`06-SECURITY/audits/lot-02.md`).
 - Statut : `VALIDÉ` — autorisation globale du propriétaire (voir journal).
+
+### Étape 03 — Base et sécurité Supabase locale
+- Branche `lot-03-supabase-securite`. Migrations `20261113000000_t001_profiles_api001.sql` + `20261113000100_lot03_hardening.sql` (T-001, RLS, trigger profil Exécutant, API-001 `set_user_role`, annuaire `list_profiles`, session active exigée).
+- Tests (Supabase local) : `npx supabase test db` 41/41 Passed · TEST-017 concurrence Passed · TEST-018 surface HTTP 5/5 Passed. Job CI `database` ajouté.
+- Revue sécurité : AUCUN BLOQUANT ; 3 MOYENNE corrigées (`06-SECURITY/audits/lot-03.md`).
+- Statut : `VALIDÉ` — autorisation globale du propriétaire.
 
 ## 5. Journal des validations
 

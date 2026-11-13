@@ -19,7 +19,7 @@ L'e-mail et les mots de passe hachés restent dans Supabase Auth. Ne pas dupliqu
 - Comptes de démo authentifiés : suppression **au plus tard 7 jours après fin des essais**. Compte « non confirmé » : NON APPLICABLE au flux actuel ; ancienne période 7 j conservée seulement en historique Notion.
 - Résultats du simulateur : mémoire frontend uniquement ; exports chiffrés de sauvegarde applicative : conservation 7 j si utilisés. Un export des profils **ne suffit pas** à restaurer Auth.
 
-## Autorisations T-001 — RLS prévue (NON IMPLÉMENTÉE)
+## Autorisations T-001 — RLS IMPLÉMENTÉE au lot 03 (`supabase/migrations/20261113000000_t001_profiles_api001.sql`)
 | Action | Anonyme | Exécutant | Manager |
 |---|---|---|---|
 | Lire son propre UUID/rôle | Refusé | Oui | Oui |
@@ -33,6 +33,14 @@ L'e-mail et les mots de passe hachés restent dans Supabase Auth. Ne pas dupliqu
 - Si `SECURITY DEFINER` indispensable : routine en schéma privé, `search_path` fixé, identité et rôle vérifiés, EXECUTE retiré de PUBLIC/anon, façade explicitement contrôlée ; éviter exposition de `auth.users` et de clés privilégiées.
 - API-001 : ordre stable de verrouillage, relecture rôle appelant après verrouillage, écriture atomique. Rejouer même demande retourne l'état demandé, sans double inversion de rôle.
 
-**À TESTER et non prouvé en phase 06 :** SELECT, INSERT, UPDATE, DELETE anonymes/Exécutant/Manager ; accès direct, auto-promotion, concurrence, révocation, profil absent, rôle périmé et suppression en cascade.
+**Prouvé au lot 03 (Supabase local, 2026-11-13)** : `npx supabase test db` 36/36 (TEST-010→016 : droits SQL, RLS, anonyme/Exécutant/Manager, auto-promotion, rejeu, cible absente, rôle périmé, cascade) ; `bash 08-TESTS/security/api001-concurrency.sh` (TEST-017 concurrence) ; `node --test 08-TESTS/security/api-surface.test.mjs` (TEST-018 surface HTTP anonyme). Restent à prouver au lot 04 : révocation de session, profil absent côté interface.
+
+### Amorçage du premier Manager (procédure opérateur)
+Jamais via l'inscription publique, et **jamais par e-mail** (adresses non vérifiées : un tiers peut s'inscrire avec l'adresse prévue).
+1. L'opérateur crée le compte lui-même : Dashboard > Authentication > Add user (ou se connecte à l'application et relève son UUID dans Authentication > Users).
+2. Avec un accès privilégié (SQL Editor du Dashboard ou `psql` local) : `update public.profiles set role = 'manager' where id = '<UUID du compte>';`
+3. Vérifier que la commande a touché **exactement 1 ligne** ; sinon arrêter et enquêter.
+
+**Historique phase 06 — à tester :** SELECT, INSERT, UPDATE, DELETE anonymes/Exécutant/Manager ; accès direct, auto-promotion, concurrence, révocation, profil absent, rôle périmé et suppression en cascade.
 
 **Traçabilité :** [D02](https://app.notion.com/p/416282ff070c80cca178f8341bf0513b) · [D04](https://app.notion.com/p/416282ff070c809395d5c6339be59c2a) · [D05](https://app.notion.com/p/416282ff070c80b7b44fd5819fa94049).
