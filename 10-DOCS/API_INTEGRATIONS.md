@@ -20,7 +20,9 @@
 | Rejeu | Demande du même rôle : retour de l'état voulu, **pas d'inversion** ; après réponse réseau incertaine : relecture |
 | Erreurs | Session absente, rôle insuffisant, cible absente, rôle invalide, conflit, panne ; messages sûrs, pas de données modifiées en cas de refus |
 
-**À DÉFINIR en implémentation :** nom physique SQL de la routine et éventuelle façade RPC, codes exacts de retour, schémas de validation et seuils de rate limiting ; ces valeurs ne sont pas validées dans Notion. Ne pas inventer d'URL REST personnalisée ou de route publique.
+**Noms physiques (lot 03)** : façades RPC `public.set_user_role(target_id uuid, new_role app_role)` → `{id, role}` et `public.list_profiles(page_limit int default 50, page_offset int default 0)` → `{id, email, role}` (plafond 100) ; routines `SECURITY DEFINER` dans le schéma non exposé `private`. Erreurs : `not_authenticated` / `forbidden` / `self_change_forbidden` (42501), `target_not_found` (P0002), `invalid_input` (22023). Rate limiting : limites Auth Supabase par défaut, pas de seuil spécifique.
+
+**Historique phase 06 — À DÉFINIR en implémentation :** nom physique SQL de la routine et éventuelle façade RPC, codes exacts de retour, schémas de validation et seuils de rate limiting ; ces valeurs ne sont pas validées dans Notion. Ne pas inventer d'URL REST personnalisée ou de route publique.
 
 ## Lectures complémentaires (sans inventer de nouveaux identifiants API)
 - Lecture du profil T-001 de l'appelant : rôle propre, pas d'autres profils.

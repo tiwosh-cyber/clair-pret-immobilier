@@ -28,3 +28,20 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm audit --audit-level=moderate
+
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.1.0
+      - run: supabase start -x studio,mailpit,imgproxy,vector,logflare,supavisor,storage-api,realtime,edge-runtime,postgres-meta
+      - run: supabase test db
+      - run: bash 08-TESTS/security/api001-concurrency.sh
+      - name: API surface (TEST-018)
+        run: |
+          eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY)=')"
+          API_URL=$API_URL ANON_KEY=$ANON_KEY node --test 08-TESTS/security/api-surface.test.mjs

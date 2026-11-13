@@ -78,3 +78,10 @@ For each execution record date, environment, exact command, result, failures, an
 | TEST-004 | AC-006 | `npm test` | Passed |
 | — | AC-005, AC-007 (recalcul immédiat, avertissement) | E2E lot 06 | Not run |
 
+### Lot 03 — 2026-11-13 (Supabase local via Docker, CLI 3.1.0)
+| ID | Couverture | Commande | Statut |
+|---|---|---|---|
+| TEST-010→016, TEST-019 | Profil par défaut, droits SQL, RLS, anon/Exécutant/Manager, auto-promotion, rejeu, rôle périmé, cascade, session révoquée | `npx supabase test db` | Passed 41/41 |
+| TEST-017 | API-001 concurrence | `bash 08-TESTS/security/api001-concurrency.sh` | Passed |
+| TEST-018 | Surface HTTP anonyme | `node --test 08-TESTS/security/api-surface.test.mjs` (API_URL, ANON_KEY) | Passed 5/5 |
+
