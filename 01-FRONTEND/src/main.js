@@ -20,33 +20,17 @@ import {
   UserRound,
   CalendarDays,
   Wallet,
-  FlaskConical,
   LoaderCircle,
   RefreshCw,
   Pencil,
-  BadgeCheck,
 } from "lucide-react";
 import { validateNumber, computeLoan, toNumber, euro } from "./features/simulator/loan.js";
+import { supabase } from "./services/supabase.js";
+import { authErrorMessage, loadRole, validateCredentials } from "./services/auth.js";
 // Police servie localement : aucune requête vers Google Fonts (revue sécu lot 01, RGPD).
 import "@fontsource-variable/inter";
 import "./styles/app.css";
 const html = htm.bind(React.createElement);
-const DEMO_PASSWORD = "DemoClair2026";
-const STORAGE_KEY = "clair-prototype-v2";
-function restore() {
-  try {
-    const data = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
-    return data?.version === 2 && Array.isArray(data.profiles) ? data : null;
-  } catch {
-    return null;
-  }
-}
-const initialProfiles = [
-  { email: "manager@demo.fr", role: "Manager" },
-  { email: "alice@demo.fr", role: "Exécutant" },
-  { email: "bob@demo.fr", role: "Exécutant" },
-  { email: "sophie@demo.fr", role: "Manager" },
-];
 const icon = (Component, props = {}) =>
   html`<${Component} aria-hidden="true" ...${props} />`;
 function Notice({ children, error = false }) {
@@ -128,7 +112,7 @@ function Header({ session, page, navigate, logout }) {
                     >${session.email.slice(0, 2).toUpperCase()}</span
                   >
                   <div className="account-text">
-                    <strong>${session.role} fictif</strong>${session.email}
+                    <strong>${session.role}</strong>${session.email}
                   </div>
                   <button
                     className="icon-button"
@@ -139,7 +123,7 @@ function Header({ session, page, navigate, logout }) {
                     ${icon(LogOut)}
                   </button>
                 </div>`
-            : html`<span className="proto-badge">PROTOTYPE INTERACTIF</span>`
+            : html`<span className="proto-badge">SIMULATION PÉDAGOGIQUE</span>`
         }
       </div>
     </div>
@@ -185,7 +169,7 @@ function Auth({
               id="email"
               className="text-input with-icon"
               type="email"
-              autocomplete="off"
+              autocomplete="email"
               autocapitalize="none"
               spellcheck=${false}
               placeholder="prenom@exemple.fr"
@@ -199,13 +183,13 @@ function Auth({
           ${errors.email && html`<p id="email-error" className="field-error" role="alert">${icon(CircleAlert)}${errors.email}</p>`}
         </div>
         <div className="field">
-          <label htmlFor="password">Mot de passe fictif</label>
+          <label htmlFor="password">Mot de passe</label>
           <div className="input-wrap">
             ${icon(LockKeyhole)}<input
               id="password"
               className="text-input with-icon"
               type=${visible ? "text" : "password"}
-              autocomplete="off"
+              autocomplete=${mode === "signup" ? "new-password" : "current-password"}
               placeholder="8 caractères minimum"
               value=${password}
               onChange=${(e) => setPassword(e.target.value)}
@@ -222,14 +206,14 @@ function Auth({
               ${icon(visible ? EyeOff : Eye)}
             </button>
           </div>
-          ${errors.password ? html`<p id="password-error" className="field-error" role="alert">${icon(CircleAlert)}${errors.password}</p>` : html`<p id="password-hint" className="hint">8 caractères minimum. N’utilisez pas un vrai mot de passe.</p>`}
+          ${errors.password ? html`<p id="password-error" className="field-error" role="alert">${icon(CircleAlert)}${errors.password}</p>` : html`<p id="password-hint" className="hint">8 caractères minimum. N’utilisez pas un mot de passe servant ailleurs.</p>`}
         </div>
         <button className="btn primary full" type="submit" disabled=${busy}>
           ${busy ? html`${icon(LoaderCircle, { className: "spinner" })}<span>Un instant…</span>` : html`<span>${mode === "signup" ? "S’inscrire" : "Se connecter"}</span>${icon(ArrowRight)}`}
         </button>
         <p className="signup-note">
-          Un espace de démonstration, sans engagement.<br />Aucun compte réel ne
-          sera créé.
+          Démonstration pédagogique : votre e-mail et votre rôle sont enregistrés
+          dans Supabase.<br />Utilisez une adresse de test.
         </p>
       </form>
       <div className="card-divider"></div>
@@ -242,53 +226,10 @@ function Auth({
         </button>
       </div>
     </div>
-    <div className="auth-card demo-credentials">
-      <strong>Identifiants de démonstration</strong>
-      <p>
-        Manager : manager@demo.fr<br />Exécutant : alice@demo.fr<br />Mot de
-        passe commun : <code>DemoClair2026</code>
-      </p>
-      <p>Choisissez « Se connecter » pour accéder à la suite.</p>
-    </div>
     <div className="assurance">
       ${icon(ShieldCheck)}<span
-        >Données fictives · Aucune donnée transmise</span
+        >Simulation calculée sur votre appareil · Aucune offre bancaire</span
       >
-    </div>
-  </section>`;
-}
-function Confirmation({ email, confirm, resend, resent, busy, back }) {
-  return html`<section className="screen">
-    <div className="intro">
-      <p className="eyebrow">PLUS QU’UNE ÉTAPE</p>
-      <h1>Votre espace vous attend.</h1>
-      <p>Une confirmation, et vous voilà prêt à simuler.</p>
-    </div>
-    <div className="auth-card confirmation">
-      <div className="confirmation-icon">${icon(Mail)}</div>
-      <h2>Confirmez votre adresse</h2>
-      <p>
-        Une confirmation fictive a été préparée pour<strong>${email}</strong>
-      </p>
-      <p className="mock-note">
-        Aucun e-mail n’est envoyé. Le bouton ci-dessous simule la confirmation
-        et ouvre le simulateur.
-      </p>
-      ${resent && html`<${Notice}>Confirmation renvoyée fictivement.</${Notice}>`}<button
-        className="btn primary full"
-        disabled=${busy}
-        onClick=${confirm}
-      >
-        ${busy ? icon(LoaderCircle, { className: "spinner" }) : icon(BadgeCheck)}<span
-          >${busy ? "Confirmation…" : "Simuler la confirmation"}</span
-        ></button
-      ><button className="text-button" disabled=${busy} onClick=${resend}>
-        Renvoyer la confirmation fictive
-      </button>
-      <div className="card-divider"></div>
-      <button className="btn quiet" onClick=${back}>
-        ${icon(ArrowLeft)}Retour à l’inscription
-      </button>
     </div>
   </section>`;
 }
@@ -648,15 +589,15 @@ function Profiles({
 function Forbidden({ navigate, session }) {
   return html`<section className="screen">
     <div className="intro">
-      <p className="eyebrow">ACCÈS LIMITÉ DANS LE PROTOTYPE</p>
+      <p className="eyebrow">ACCÈS LIMITÉ</p>
       <h1>Cet espace est réservé aux Managers.</h1>
     </div>
     <div className="auth-card empty-state">
       ${icon(LockKeyhole)}
       <h2>Accès non autorisé</h2>
       <p>
-        Le profil ${session?.role || "non confirmé"} ne peut pas consulter la
-        gestion des profils, y compris par la navigation simulée.
+        Votre profil ${session?.role || ""} ne peut pas consulter la gestion des
+        profils.
       </p>
       <button className="btn primary" onClick=${() => navigate("/simulateur")}>
         ${icon(ArrowLeft)}Revenir au simulateur
@@ -664,152 +605,95 @@ function Forbidden({ navigate, session }) {
     </div>
   </section>`;
 }
-function DemoPanel({
-  session,
-  chooseProfile,
-  route,
-  navigate,
-  status,
-  setStatus,
-}) {
-  const [demoRole, setDemoRole] = useState("Exécutant");
-  const [url, setUrl] = useState(route);
-  useEffect(() => setUrl(route), [route]);
-  return html`<div className="demo-wrap">
-    <details className="demo">
-      <summary>
-        ${icon(FlaskConical)}<span className="demo-label">Mode démo</span
-        ><span className="demo-sub"
-          >Explorez les rôles et les états du prototype</span
-        >${icon(ChevronDown, { className: "demo-chevron" })}
-      </summary>
-      <div className="demo-content">
-        <div>
-          <label htmlFor="demo-role">Compte fictif</label>
-          <div className="demo-actions">
-            <select
-              id="demo-role"
-              value=${demoRole}
-              onChange=${(e) => setDemoRole(e.target.value)}
-            >
-              <option>Exécutant</option>
-              <option>Manager</option></select
-            ><button
-              className="btn small"
-              onClick=${() => chooseProfile(demoRole)}
-            >
-              ${session ? "Changer de compte" : "Préremplir le formulaire"}${icon(ArrowRight)}
-            </button>
-          </div>
-          <p className="hint">
-            ${session ? `Rôle actif : ${session.role} fictif` : "Comptes confirmés : connexion directe au simulateur."}
-          </p>
-        </div>
-        <div>
-          <label htmlFor="demo-url">Navigation simulée</label>
-          <form
-            className="demo-actions"
-            onSubmit=${(e) => {
-              e.preventDefault();
-              navigate(url);
-            }}
-          >
-            <input
-              id="demo-url"
-              value=${url}
-              onChange=${(e) => setUrl(e.target.value)}
-              placeholder="/profils"
-            /><button className="btn small" type="submit">
-              Aller${icon(ArrowRight)}
-            </button>
-          </form>
-          <p className="hint">
-            /inscription · /connexion · /confirmation · /simulateur · /profils
-          </p>
-        </div>
-        ${
-          session?.role === "Manager" &&
-          route === "/profils" &&
-          html`<div>
-            <label htmlFor="demo-state">État de la liste</label
-            ><select
-              id="demo-state"
-              value=${status}
-              onChange=${(e) => setStatus(e.target.value)}
-            >
-              <option value="ready">Liste des profils</option>
-              <option value="loading">Chargement (figé pour revue)</option>
-              <option value="empty">Liste vide</option>
-              <option value="error">Erreur de chargement</option>
-            </select>
-          </div>`
-        }
-        <p className="demo-disclaimer">
-          Identifiants fictifs : manager@demo.fr (Manager) · alice@demo.fr
-          (Exécutant). Mot de passe : DemoClair2026. Prototype UX uniquement :
-          vérification locale simulée, aucun e-mail envoyé. Les comptes et la
-          session sont conservés dans cet onglet jusqu’à sa fermeture. Le
-          changement de rôle sert à la revue des écrans et ne constitue pas une
-          véritable permission. Utilisez uniquement des données fictives.
-        </p>
-      </div>
-    </details>
-  </div>`;
-}
+const PROTECTED = ["/simulateur", "/profils"];
+const TITLES = {
+  "/inscription": "Inscription · E-001",
+  "/connexion": "Connexion · E-001",
+  "/simulateur": "Simulateur · E-002",
+  "/profils": "Profils · E-003",
+};
 function App() {
-  const [saved] = useState(restore);
   const [page, setPage] = useState(location.hash.slice(1) || "/inscription");
-  const [session, setSession] = useState(saved?.session || null);
+  // session = { id, email, role } ; le rôle vient toujours de T-001, jamais du navigateur.
+  const [session, setSession] = useState(null);
+  const [checking, setChecking] = useState(!!supabase);
   const mode = page === "/connexion" ? "signin" : "signup";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
-  const [busy] = useState(false);
-  const [pending, setPending] = useState(saved?.pending || null);
-  const [resent, setResent] = useState(false);
-  const [authNotice, setAuthNotice] = useState("");
-  const [notice, setNotice] = useState(null);
-  const [profiles, setProfiles] = useState(
-    saved?.profiles ||
-      initialProfiles.map((p) => ({
-        ...p,
-        password: DEMO_PASSWORD,
-        confirmed: true,
-      })),
+  const [busy, setBusy] = useState(false);
+  const [authNotice, setAuthNotice] = useState(
+    supabase ? "" : "Configuration Supabase manquante : renseignez VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY.",
   );
-  const [status, setStatus] = useState("ready");
+  const [notice, setNotice] = useState(null);
+  const [profiles] = useState([]);
+  const [status, setStatus] = useState("empty");
   const [target, setTarget] = useState(null);
-  const [roleBusy, setRoleBusy] = useState(false);
+  const [roleBusy] = useState(false);
   const [amount, setAmount] = useState("5000");
   const [months, setMonths] = useState("12");
   const [valid, setValid] = useState({ amount: 5000, months: 12 });
-  useEffect(() => {
-    try {
-      sessionStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ version: 2, session, pending, profiles }),
-      );
-    } catch {
-      // Stockage refusé par le navigateur : le prototype reste utilisable en mémoire.
-    }
-  }, [session, pending, profiles]);
-  function navigate(raw, replace = false) {
+  function resetSimulator() {
+    setAmount("5000");
+    setMonths("12");
+    setValid({ amount: 5000, months: 12 });
+  }
+  function navigate(raw, replace = false, keepNotice = false) {
     const route = raw.replace(/^#/, "").trim();
     setTarget(null);
     setNotice(null);
     setErrors({});
-    setAuthNotice("");
+    if (!keepNotice) setAuthNotice("");
     if (replace) history.replaceState(null, "", "#" + route);
     else if (location.hash !== "#" + route)
       history.pushState(null, "", "#" + route);
     setPage(route);
   }
+  // Ouvre l'espace seulement si le profil T-001 est lisible ; sinon la session est fermée.
+  async function openSession(user) {
+    try {
+      const role = await loadRole(supabase, user.id);
+      setSession({ id: user.id, email: user.email, role });
+      return true;
+    } catch (e) {
+      await supabase.auth.signOut({ scope: "local" });
+      setSession(null);
+      setErrors({ form: true });
+      setAuthNotice(
+        e.message === "profile_missing"
+          ? "Votre profil est indisponible : l’accès est refusé. Réessayez plus tard."
+          : "Impossible de vérifier votre profil. Vérifiez votre connexion puis réessayez.",
+      );
+      return false;
+    }
+  }
+  useEffect(() => {
+    if (!supabase) return;
+    let active = true;
+    supabase.auth
+      .getSession()
+      .then(async ({ data }) => {
+        if (active && data.session) await openSession(data.session.user);
+      })
+      .finally(() => active && setChecking(false));
+    // Session expirée, révoquée ou fermée dans un autre contexte : on retire tout accès local.
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setSession(null);
+        setTarget(null);
+        resetSimulator();
+      }
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
   useEffect(() => {
     const sync = () => {
       setPage(location.hash.slice(1) || "/inscription");
       setTarget(null);
       setErrors({});
-      setAuthNotice("");
     };
     window.addEventListener("popstate", sync);
     window.addEventListener("hashchange", sync);
@@ -820,24 +704,14 @@ function App() {
     };
   }, []);
   useEffect(() => {
-    if (["/simulateur", "/profils"].includes(page) && !session) {
-      navigate("/connexion", true);
-      setAuthNotice(
-        "Connectez-vous à un compte fictif confirmé pour accéder à cet écran.",
-      );
-    } else if (page === "/confirmation" && !pending) {
-      navigate("/connexion", true);
-      setAuthNotice("Aucune confirmation fictive en attente.");
+    if (checking) return;
+    if (PROTECTED.includes(page) && !session) {
+      navigate("/connexion", true, true);
+      setAuthNotice((n) => n || "Connectez-vous pour accéder à cet écran.");
+    } else if (session && (page === "/connexion" || page === "/inscription")) {
+      navigate("/simulateur", true);
     }
-    document.title =
-      "Clair — " +
-      ({
-        "/inscription": "Inscription · E-001",
-        "/connexion": "Connexion · E-001",
-        "/confirmation": "Confirmation · E-001",
-        "/simulateur": "Simulateur · E-002",
-        "/profils": "Profils · E-003",
-      }[page] || "Page introuvable");
+    document.title = "Clair — " + (TITLES[page] || "Page introuvable");
     requestAnimationFrame(() => {
       const heading = document.querySelector("main h1");
       if (heading) {
@@ -845,131 +719,47 @@ function App() {
         heading.focus({ preventScroll: true });
       }
     });
-  }, [page, session, pending]);
-  function submit(e) {
+  }, [page, session, checking]);
+  async function submit(e) {
     e.preventDefault();
-    const next = {};
-    const address = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address))
-      next.email = "Saisissez une adresse e-mail valide.";
-    if (password.length < 8) next.password = "Utilisez au moins 8 caractères.";
+    const next = validateCredentials(email, password);
     setErrors(next);
     setAuthNotice("");
     if (Object.keys(next).length) {
       document.getElementById(next.email ? "email" : "password")?.focus();
       return;
     }
-    const known = profiles.find((p) => p.email === address);
-    const fail = (message) => {
-      setErrors({ form: true });
-      setAuthNotice(message);
-    };
-    if (mode === "signin") {
-      if (!known)
-        return fail(
-          "Ce compte fictif n’existe pas. Inscrivez-vous ou utilisez un compte de démonstration.",
-        );
-      if (known.password !== password)
-        return fail(
-          "Identifiants incorrects. Vérifiez le mot de passe de démonstration.",
-        );
-      if (!known.confirmed) {
-        setPending({ email: known.email, role: known.role });
-        navigate("/confirmation");
-        setAuthNotice(
-          "Votre e-mail fictif n’est pas confirmé. Simulez la confirmation pour continuer.",
-        );
-        setPassword("");
+    if (!supabase) return;
+    setBusy(true);
+    try {
+      const credentials = { email: email.trim().toLowerCase(), password };
+      const { data, error } =
+        mode === "signin"
+          ? await supabase.auth.signInWithPassword(credentials)
+          : await supabase.auth.signUp(credentials);
+      setPassword("");
+      if (error || !data.session) {
+        setErrors({ form: true });
+        setAuthNotice(authErrorMessage(error));
         return;
       }
-      setSession({ email: known.email, role: known.role });
-      setPassword("");
-      navigate("/simulateur");
-    } else {
-      if (known)
-        return fail("Ce compte fictif existe déjà. Utilisez Se connecter.");
-      const account = {
-        email: address,
-        password,
-        role: "Exécutant",
-        confirmed: false,
-      };
-      setProfiles((prev) => [...prev, account]);
-      setPending({ email: address, role: "Exécutant" });
-      setPassword("");
-      setResent(false);
-      navigate("/confirmation");
+      if (await openSession(data.session.user)) navigate("/simulateur");
+    } catch {
+      setErrors({ form: true });
+      setAuthNotice(authErrorMessage());
+    } finally {
+      setBusy(false);
     }
   }
-  function confirm() {
-    if (!pending) return;
-    setProfiles((prev) =>
-      prev.map((p) =>
-        p.email === pending.email ? { ...p, confirmed: true } : p,
-      ),
-    );
-    setSession(pending);
-    setPending(null);
-    navigate("/simulateur");
-  }
-  function logout() {
+  async function logout() {
+    // Révoque la session côté Supabase ; en cas d'échec réseau, on ferme au moins la session locale.
+    const { error } = await supabase.auth.signOut();
+    if (error) await supabase.auth.signOut({ scope: "local" });
     setSession(null);
-    setPending(null);
     setPassword("");
     setEmail("");
-    setTarget(null);
-    setNotice(null);
     navigate("/connexion");
-    setAmount("5000");
-    setMonths("12");
-    setValid({ amount: 5000, months: 12 });
-  }
-  function chooseProfile(role) {
-    const chosen = {
-      email: role === "Manager" ? "manager@demo.fr" : "alice@demo.fr",
-      role,
-    };
-    setProfiles((prev) =>
-      prev.map((p) => (p.email === chosen.email ? { ...p, role } : p)),
-    );
-    setTarget(null);
-    setPending(null);
-    if (session) {
-      setSession(chosen);
-      navigate("/simulateur");
-    } else {
-      navigate("/connexion");
-      setEmail(chosen.email);
-      setPassword(DEMO_PASSWORD);
-      setAuthNotice(
-        `Compte ${role} confirmé prérempli. Cliquez sur Se connecter.`,
-      );
-    }
-  }
-  function changeRole(p) {
-    if (session?.role !== "Manager" || session.email === p.email) {
-      setTarget(null);
-      setNotice({
-        type: "error",
-        text: "Action interdite : ce rôle ne peut pas être modifié.",
-      });
-      return;
-    }
-    setRoleBusy(true);
-    {
-      const next = p.role === "Manager" ? "Exécutant" : "Manager";
-      setProfiles((prev) =>
-        prev.map((item) =>
-          item.email === p.email ? { ...item, role: next } : item,
-        ),
-      );
-      setRoleBusy(false);
-      setTarget(null);
-      setNotice({
-        type: "success",
-        text: `Modification réussie : ${p.email} est désormais ${next}.`,
-      });
-    }
+    resetSimulator();
   }
   return html`<div className="shell">
     <${Header}
@@ -980,34 +770,26 @@ function App() {
     />
     <main id="main" tabindex=${-1}>
       <${Steps} page=${page} session=${session} />${
-        page === "/inscription" || page === "/connexion"
-          ? html`<${Auth}
-              mode=${mode}
-              setMode=${(v) => {
-                setPassword("");
-                navigate(v === "signin" ? "/connexion" : "/inscription");
-              }}
-              email=${email}
-              setEmail=${setEmail}
-              password=${password}
-              setPassword=${setPassword}
-              onSubmit=${submit}
-              busy=${busy}
-              errors=${errors}
-              notice=${authNotice}
-            />`
-          : page === "/confirmation"
-            ? html`${authNotice && html`<div style=${{ marginTop: "24px" }}><${Notice}>${authNotice}</${Notice}></div>`}<${Confirmation}
-                  email=${pending?.email}
-                  confirm=${confirm}
-                  resend=${() => setResent(true)}
-                  resent=${resent}
-                  busy=${busy}
-                  back=${() => {
-                    setPending(null);
-                    navigate("/inscription");
-                  }}
-                />`
+        checking
+          ? html`<section className="screen intro" role="status">
+              <h1>Vérification de votre session…</h1>
+            </section>`
+          : page === "/inscription" || page === "/connexion"
+            ? html`<${Auth}
+                mode=${mode}
+                setMode=${(v) => {
+                  setPassword("");
+                  navigate(v === "signin" ? "/connexion" : "/inscription");
+                }}
+                email=${email}
+                setEmail=${setEmail}
+                password=${password}
+                setPassword=${setPassword}
+                onSubmit=${submit}
+                busy=${busy || !supabase}
+                errors=${supabase ? errors : { form: true }}
+                notice=${authNotice}
+              />`
             : page === "/profils" && session?.role !== "Manager"
               ? html`<${Forbidden} session=${session} navigate=${navigate} />`
               : page === "/profils"
@@ -1018,7 +800,7 @@ function App() {
                     setStatus=${setStatus}
                     target=${target}
                     setTarget=${setTarget}
-                    onConfirm=${changeRole}
+                    onConfirm=${() => setTarget(null)}
                     busy=${roleBusy}
                     notice=${notice}
                     setNotice=${setNotice}
@@ -1035,7 +817,7 @@ function App() {
                     />`
                   : html`<section className="screen intro">
                       <h1>Page introuvable</h1>
-                      <p>Cette adresse n’existe pas dans le prototype.</p>
+                      <p>Cette adresse n’existe pas.</p>
                       <button
                         className="btn"
                         onClick=${() => navigate(session ? "/simulateur" : "/connexion")}
@@ -1048,17 +830,9 @@ function App() {
     <footer className="footer">
       <span>© 2026 Clair. Un projet, une perspective.</span
       ><span className="footer-right"
-        ><span></span>Prototype pédagogique · Sans engagement</span
+        ><span></span>Simulation pédagogique · Sans engagement</span
       >
     </footer>
-    <${DemoPanel}
-      session=${session}
-      chooseProfile=${chooseProfile}
-      route=${page}
-      navigate=${navigate}
-      status=${status}
-      setStatus=${setStatus}
-    />
   </div>`;
 }
 createRoot(document.getElementById("root")).render(html`<${App} />`);

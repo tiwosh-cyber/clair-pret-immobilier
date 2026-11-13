@@ -45,3 +45,14 @@ jobs:
         run: |
           eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY)=')"
           API_URL=$API_URL ANON_KEY=$ANON_KEY node --test 08-TESTS/security/api-surface.test.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: 01-FRONTEND/package-lock.json
+      - name: Auth integration (TEST-023 → TEST-028)
+        working-directory: 01-FRONTEND
+        run: |
+          npm ci
+          eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY)=')"
+          API_URL=$API_URL ANON_KEY=$ANON_KEY npm run test:integration
