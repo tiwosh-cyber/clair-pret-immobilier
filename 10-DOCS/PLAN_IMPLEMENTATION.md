@@ -18,7 +18,7 @@ Voir `AGENTS.md` (sections « Implementation plan and lot validation » et « Gi
 
 | N° | Lot | IDs | Dépend de | Critère principal | Revue sécu | Statut |
 |---|---|---|---|---|---|---|
-| 01 | Fondations | Vite + React/htm, portage du prototype, CI | — | L'app démarre localement ; scripts et CI vérifiés ; aucun secret versionné | — | EN COURS |
+| 01 | Fondations | Vite + React/htm, portage du prototype, CI | — | L'app démarre localement ; scripts et CI vérifiés ; aucun secret versionné | AUCUN BLOQUANT | VALIDÉ |
 | 02 | Simulateur | F-001→F-006 / AC-001→AC-007 / E-002 | 01 | Calculs et validations testés (Vitest), CI verte | — | À FAIRE |
 | 03 | Base et sécurité Supabase locale | T-001 / API-001 / RLS | 01 | pgTAP : RLS, API-001, refus anonyme/Exécutant, auto-rétrogradation, concurrence | — | À FAIRE |
 | 04 | Authentification | F-007→F-009 / AC-008→AC-012 / E-001 | 02 + 03 | Inscription/connexion/déconnexion Supabase réelles, accès fermé après déconnexion | — | À FAIRE |
@@ -38,7 +38,21 @@ Stratégie de tests : Vitest (calcul, validation), pgTAP sur Supabase local (RLS
 - Branche : `lot-01-fondations`.
 - Hors périmètre : correction des règles du simulateur (lot 02), Supabase réel (lots 03-04). Le faux login du prototype reste en place jusqu'au lot 04.
 
-**FIN DE LOT** — à compléter.
+**FIN DE LOT**
+- Fichiers : `01-FRONTEND/{index.html,package.json,package-lock.json,eslint.config.js,src/main.js,src/features/simulator/loan.js,loan.test.js,src/styles/app.css}`, `.github/workflows/ci.yml`, `supabase/{config.toml,.gitignore}`, `.env.example`, `08-TESTS/TESTING.md`, `10-DOCS/CODE_STYLE.md`, `06-SECURITY/audits/lot-01.md`.
+- Corrections au prototype : code mort supprimé (lint), contour noir du titre focalisé retiré, police Inter servie localement (plus de Google Fonts).
+- Tests exécutés (2026-11-13, Windows, Node 24) : `npm run lint` Passed · `npm test` Passed (4/4) · `npm run build` Passed · `npm audit` Passed (0 vulnérabilité) · rendu Edge headless 1440 px identique au prototype : Passed.
+- Non exécutés : E2E/axe (lot 06) ; garde-fou `test-garde-fou.cjs` (exécution bloquée par le hook lui-même) ; Supabase local (Docker Desktop arrêté, utile au lot 03).
+- CI : NON VÉRIFIÉ (aucun dépôt GitHub, Q-T5) ; mêmes commandes passées en local.
+- Revue sécurité : AUCUN BLOQUANT ; 3 MOYENNE corrigées ; rapport `06-SECURITY/audits/lot-01.md`.
+- Risque accepté par l'utilisateur : aucun.
+- Démonstration : `cd 01-FRONTEND && npm run dev` → http://localhost:5173
+- Statut : `VALIDÉ`.
+
+**CLÔTURE**
+- Validation : « Je valide le lot 01 » — 2026-11-13.
+- Branche : `lot-01-fondations` → fusion `--no-ff` dans `main` après accord.
+- Contrôles à relancer sur `main` : `npm run lint`, `npm test`, `npm run build`, `npm audit` (dans `01-FRONTEND/`).
 
 ## 5. Journal des validations
 
@@ -46,6 +60,7 @@ Stratégie de tests : Vitest (calcul, validation), pgTAP sur Supabase local (RLS
 |---|---|---|---|---|
 | 2026-11-13 | Découpage | « Je valide le découpage, enregistre le plan. » | — | Notion 07 |
 | 2026-11-13 | Plan global | « Je valide le plan, suis tes recommandations pour Q-T1 à Q-T4 » | — | Notion 07 |
+| 2026-11-13 | Lot 01 | « Je valide le lot 01 » | `lot-01-fondations` | Revue sécu : aucun bloquant |
 
 ## 6. Questions bloquantes (techniques)
 

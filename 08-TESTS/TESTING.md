@@ -49,11 +49,14 @@ Every approved PRD feature and high-risk permission must have a test owner, an o
 - `node 11-SCRIPTS/checks/test-garde-fou.cjs` verifies the Claude Code hook against known dangerous commands, the protection of the security configuration, and fail-closed behavior (Node missing, script missing or broken). Run it at the start of `/plan-projet` and after any change to `.claude/settings.json` or `.claude/hooks/`.
 
 ## Verified commands
-- Unit/integration: [Actual command or Not configured]
-- End-to-end: [Actual command or Not configured]
-- Build/type check: [Actual command or Not configured]
-- Security and RLS checks: [Actual commands or Not configured]
-- CI workflow: [Actual path/trigger, if configured]
+All frontend commands run from `01-FRONTEND/`.
+- Lint: `npm run lint` (ESLint 9, `eslint.config.js`).
+- Unit: `npm test` (Vitest; tests next to the code, `*.test.js`).
+- End-to-end: Not configured (Playwright + axe planned in lot 06).
+- Build: `npm run build` (Vite). Type check: Not applicable (Q-T3: JavaScript + htm).
+- Dependency audit: `npm audit`.
+- Security and RLS checks: Not configured (pgTAP on local Supabase planned in lot 03; requires Docker Desktop running).
+- CI workflow: `.github/workflows/ci.yml` on push to `main` and on pull requests: `npm ci`, lint, test, build, `npm audit --audit-level=moderate`.
 
 Only list commands that exist in the current project; do not invent framework scripts or mark unexecuted checks as completed.
 
