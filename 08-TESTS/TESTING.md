@@ -68,3 +68,13 @@ Only list commands that exist in the current project; do not invent framework sc
 
 ## Results
 For each execution record date, environment, exact command, result, failures, and untested limitations. Allowed status values: **Not run / Passed / Failed / Blocked / Not applicable**. Keep Not run distinct from Passed and record the actual evidence; never fabricate a test result. Add regression tests for important bug fixes and previously discovered security issues.
+
+### Lot 02 — 2026-11-13 (Windows, Node 24)
+| ID | AC | Commande | Statut |
+|---|---|---|---|
+| TEST-001 | AC-003 | `npm test` (loan.test.js) | Passed |
+| TEST-002 | AC-004 | `npm test` | Passed |
+| TEST-003 | AC-001, AC-002 | `npm test` | Passed |
+| TEST-004 | AC-006 | `npm test` | Passed |
+| — | AC-005, AC-007 (recalcul immédiat, avertissement) | E2E lot 06 | Not run |
+

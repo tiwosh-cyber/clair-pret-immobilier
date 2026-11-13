@@ -19,7 +19,7 @@ Voir `AGENTS.md` (sections « Implementation plan and lot validation » et « Gi
 | N° | Lot | IDs | Dépend de | Critère principal | Revue sécu | Statut |
 |---|---|---|---|---|---|---|
 | 01 | Fondations | Vite + React/htm, portage du prototype, CI | — | L'app démarre localement ; scripts et CI vérifiés ; aucun secret versionné | AUCUN BLOQUANT | VALIDÉ |
-| 02 | Simulateur | F-001→F-006 / AC-001→AC-007 / E-002 | 01 | Calculs et validations testés (Vitest), CI verte | — | À FAIRE |
+| 02 | Simulateur | F-001→F-006 / AC-001→AC-007 / E-002 | 01 | Calculs et validations testés (Vitest), CI verte | AUCUN BLOQUANT | VALIDÉ |
 | 03 | Base et sécurité Supabase locale | T-001 / API-001 / RLS | 01 | pgTAP : RLS, API-001, refus anonyme/Exécutant, auto-rétrogradation, concurrence | — | À FAIRE |
 | 04 | Authentification | F-007→F-009 / AC-008→AC-012 / E-001 | 02 + 03 | Inscription/connexion/déconnexion Supabase réelles, accès fermé après déconnexion | — | À FAIRE |
 | 05 | Gestion des profils | F-010, F-011 / AC-013→AC-016 / E-003 | 04 | Liste et changement de rôle Manager via API-001 ; Exécutant refusé | — | À FAIRE |
@@ -54,6 +54,12 @@ Stratégie de tests : Vitest (calcul, validation), pgTAP sur Supabase local (RLS
 - Branche : `lot-01-fondations` → fusion `--no-ff` dans `main` après accord.
 - Contrôles à relancer sur `main` : `npm run lint`, `npm test`, `npm run build`, `npm audit` (dans `01-FRONTEND/`).
 
+### Étape 02 — Simulateur
+- Branche `lot-02-simulateur`. Le simulateur porté couvrait déjà AC-001→AC-007 ; le lot prouve les règles par 37 tests Vitest (TEST-001→TEST-004) et corrige la précision des décimales et la longueur des champs.
+- Tests : `npm run lint` Passed · `npm test` Passed 37/37 · `npm run build` Passed · `npm audit` Passed.
+- Revue sécurité : AUCUN BLOQUANT (`06-SECURITY/audits/lot-02.md`).
+- Statut : `VALIDÉ` — autorisation globale du propriétaire (voir journal).
+
 ## 5. Journal des validations
 
 | Date | Étape | Phrase exacte de l'utilisateur | Branche | Remarques |
@@ -61,6 +67,7 @@ Stratégie de tests : Vitest (calcul, validation), pgTAP sur Supabase local (RLS
 | 2026-11-13 | Découpage | « Je valide le découpage, enregistre le plan. » | — | Notion 07 |
 | 2026-11-13 | Plan global | « Je valide le plan, suis tes recommandations pour Q-T1 à Q-T4 » | — | Notion 07 |
 | 2026-11-13 | Lot 01 | « Je valide le lot 01 » | `lot-01-fondations` | Revue sécu : aucun bloquant |
+| 2026-11-13 | Lots 02→06 + préparation phase 09 | « j autorise tous les actions fais tout ce qui a faire jusqu a la phase 9 avant le lancement » | `lot-02…lot-06` | Autorisation globale ; fusions locales, push par le propriétaire ; aucune mise en production |
 
 ## 6. Questions bloquantes (techniques)
 
