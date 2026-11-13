@@ -1,11 +1,11 @@
 # Code Style
 
 ## Languages and conventions
-- Language/version: [Match the approved stack]
-- Naming: [Files, functions, components, variables, tables]
-- Formatting/linting: [Tools and actual configuration]
-- Type safety: [Rules appropriate to the project]
-- Module system, import aliases, package manager, and runtime versions: [Verified choices]
+- Language/version: JavaScript (ES modules), React 19 rendered with `htm` (no JSX), Node ≥ 20 (CI uses Node 22).
+- Naming: camelCase functions/variables, PascalCase components, kebab-case folders; SQL in snake_case.
+- Formatting/linting: ESLint 9 recommended rules (`01-FRONTEND/eslint.config.js`); `npm run lint`.
+- Type safety: Not applicable (Q-T3); validate inputs explicitly at boundaries.
+- Module system, import aliases, package manager, and runtime versions: ESM, relative imports, npm with `package-lock.json`, Vite build. Commands: `npm run dev | lint | test | build`, `npm audit` (from `01-FRONTEND/`).
 
 ## Organization
 - Directory responsibilities: [Match ARCHITECTURE.md]
