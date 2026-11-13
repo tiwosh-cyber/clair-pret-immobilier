@@ -26,18 +26,11 @@ import {
   Pencil,
   BadgeCheck,
 } from "lucide-react";
-import { validateNumber, computeLoan } from "./features/simulator/loan.js";
+import { validateNumber, computeLoan, toNumber, euro } from "./features/simulator/loan.js";
 // Police servie localement : aucune requête vers Google Fonts (revue sécu lot 01, RGPD).
 import "@fontsource-variable/inter";
 import "./styles/app.css";
 const html = htm.bind(React.createElement);
-const euro = (n) =>
-  new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(n);
 const DEMO_PASSWORD = "DemoClair2026";
 const STORAGE_KEY = "clair-prototype-v2";
 function restore() {
@@ -321,6 +314,7 @@ function NumberControl({
         id=${id}
         type="text"
         inputmode="numeric"
+        maxlength=${12}
         value=${value}
         onChange=${(e) => onChange(e.target.value)}
         aria-invalid=${!!error}
@@ -370,8 +364,8 @@ function Simulator({
       !validateNumber(nextMonths, "months")
     )
       setValid({
-        amount: Number(nextAmount.replace(",", ".")),
-        months: Number(nextMonths.replace(",", ".")),
+        amount: toNumber(nextAmount),
+        months: toNumber(nextMonths),
       });
   }
   const { interest, total, monthly } = computeLoan(valid.amount, valid.months);
@@ -396,7 +390,7 @@ function Simulator({
           id="amount"
           label="Montant de votre prêt"
           value=${amount}
-          last=${!amountError ? Number(amount.replace(",", ".")) : valid.amount}
+          last=${!amountError ? toNumber(amount) : valid.amount}
           min=${5000}
           max=${15000}
           step=${500}
@@ -408,7 +402,7 @@ function Simulator({
           id="months"
           label="Durée de remboursement"
           value=${months}
-          last=${!monthsError ? Number(months.replace(",", ".")) : valid.months}
+          last=${!monthsError ? toNumber(months) : valid.months}
           min=${12}
           max=${72}
           step=${1}
